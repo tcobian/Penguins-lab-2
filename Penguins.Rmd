@@ -41,7 +41,63 @@ penguins2<- penguins %>%
   filter(sex == "FEMALE")
 ```
 
+Exploratory graphs and a Levene's test
 
+```{r}
+hist<- ggplot(penguins2, aes(x = flipper_length))+
+  geom_histogram(aes(fill = common_name))+
+  facet_wrap(~ common_name, scale = "free")
+hist
 
+qq<- ggplot(penguins2, aes(sample = flipper_length))+
+  geom_qq(aes(color = common_name))+
+  facet_wrap(~common_name, scales = "free")
+qq
+#based on the Histogram and qqplot results data for each group appear normally distribusted. Also n is greater than 30, so means will be normally distributed by the CLT.
+```
+ 
+ 
+Evaluate th variances with a Levene's test for equal variances
+
+```{r}
+#If the sample variances is < 4x greater than the smallest sample, then these are "close enough" to consider the variances equal
+
+variances<- penguins2 %>% 
+  group_by(common_name) %>% 
+  summarize(
+    variance = var(flipper_length)
+  )
+variances # The largest variance (33.1) is definitly not more than 4x greater than the smallest variance (15.2)
+
+#Leven's test
+#leveneTest function in the "car" package
+
+levene_penguin<- leveneTest(flipper_length~common_name, data = penguins2)
+
+#H0: no difference in variaces
+#HA: There is a difference in variances
+
+# There is no significant difference between species. 
+```
+
+One-way ANOVA for penguin flipper length by species (common_name)
+
+```{r}
+#H0: means across all groups are equal
+#HA: At least two means differ significantly
+
+penguin_aov<- aov(flipper_length ~ common_name, data = penguins2)
+summary(penguin_aov)
+
+#post-hoc test bu Tukey's HSD
+#H0: There is not significant difference in pair wise means
+#HA: At least two means differ significantly
+penguin_ph<- TukeyHSD(penguin_aov)
+penguin_ph
+
+#aov.test function is the onewaytest packages allows for inline refrencing
+```
+
+Mean flipper leangth of female penguins differed significantly for all species studied (one-way ANOVA, F(df) = statistic, p<0.001, $\alpha$ = 0.05)
 
 
